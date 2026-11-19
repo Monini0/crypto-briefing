@@ -13,7 +13,9 @@ data.json:
                    "d": "2026-11-19:86586000,2026-11-18:...",   (업비트 일봉 종가, date:price)
                    "w": "...", "m": "..."}, "ETH": {...}, "SOL": {...}, "XRP": {...}},
  "height": 2030,   (optional. 포스터 높이를 강제로 맞출 때)
- "onchain": {"realized": 53477, "realized_note": "11/18"},
+ "onchain": {"realized": 53477, "realized_note": "11/18",
+             "mining_cost": 77443, "mining_note": "11/17",            (평균 채굴원가=생산비용, 달러. 없으면 칸이 빠진다)
+             "mining_sub": "평균 채굴원가는 MacroMicro 기준 · 다른 추정: MARA 3분기 $62,862 · JP모건 $78,000"},  (출처와 다른 추정치 한 줄, 선택. note는 날짜만 짧게)
             (delta는 넣지 않는다: 스크립트가 "실현가격 - 전체 기간 평균 가격"으로 자동 계산한다.)
             (가운데 "실현가격 75%" 칸은 realized × 0.75 로 스크립트가 자동 계산한다.)
             (optional. BTC 실현가격·델타가격(달러). 값이 있으면 포스터 높이가 2030px로 늘어난다.
@@ -178,13 +180,16 @@ def main():
         def tile(label, en, val, note, color):
             if not val: return ""
             diff = (px/float(val)-1)*100
-            pos = f"현재가가 {abs(diff):.1f}% {'위' if diff >= 0 else '아래'}"
-            return (f'<div class="dt" style="border-top-color:{color}"><span>{label} <small>{en}</small></span>'
-                    f'<b style="color:{color};font-size:36px">${float(val):,.0f}</b><em>{pos}{" · " + html.escape(note) if note else ""}</em></div>')
+            pos = f"현재가 {abs(diff):.1f}% {'위' if diff >= 0 else '아래'}"
+            return (f'<div class="dt oc" style="border-top-color:{color}"><span>{label}</span><small class="en">{en}{" · " + html.escape(note) if note else ""}</small>'
+                    f'<b style="color:{color};font-size:34px">${float(val):,.0f}</b><em>{pos}</em></div>')
         oc_html = ('<h2><i>●</i> BTC 온체인 가격 <small>현재가 ' + usd_fmt(px) + '</small></h2><div class="dom">'
                    + tile("실현가격", "Realized Price", oc.get("realized"), oc.get("realized_note", ""), "#ff5d6c")
                    + tile("실현가격 75%", "RP × 0.75", float(oc["realized"])*0.75, "", "#ff8fc7")
-                   + tile("델타가격", "Delta Price", oc.get("delta"), oc.get("delta_note", ""), "#b48cff") + '</div>')
+                   + tile("델타가격", "Delta Price", oc.get("delta"), oc.get("delta_note", ""), "#b48cff")
+                   + tile("채굴원가", "Production Cost", oc.get("mining_cost"), oc.get("mining_note", ""), "#3fc1c9") + '</div>')
+        if oc.get("mining_sub"):
+            oc_html += f'<div class="ocs">⛏ 채굴원가 참고: {html.escape(oc["mining_sub"])}</div>'; H += 40
         res["_onchain"] = oc
     H = max(H, int(data.get("height", 0)))
     issues = "".join(f'<div class="is"><div class="n">{i+1}</div><div><b>{html.escape(re.sub(r"\[\[|\]\]|\*\*", "", t))}</b><p>{R(p)}</p></div></div>'
@@ -217,7 +222,10 @@ h2 small{{font-size:20px;color:#8b97b0;font-weight:400;margin-left:10px}}
 .dom{{display:flex;gap:14px}}
 .dt{{flex:1;background:#111727;border-top:4px solid;border-radius:12px;padding:14px 16px}}
 .dt span{{display:block;font-size:20px;color:#aab4c8;font-weight:700}}
-.dt span small{{font-size:16px;color:#8b97b0;font-weight:400;margin-left:6px}}
+.dt small.en{{display:block;font-size:15px;color:#8b97b0;margin-top:1px}}
+.dt.oc{{flex:1 1 0;min-width:0;padding:14px 14px}}
+.dt.oc small.en,.dt.oc em{{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.ocs{{font-size:19px;color:#8fd8de;margin-top:12px;padding-left:4px}}
 .dt b{{display:block;font-size:38px;font-weight:900;line-height:1.25}}
 .dt em{{font-style:normal;font-size:19px;color:#8b97b0}}
 .bar{{display:flex;height:14px;border-radius:7px;overflow:hidden;margin-top:14px}}
