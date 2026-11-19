@@ -124,7 +124,8 @@ h2 i{{font-style:normal;color:#f7931a}}
 .n{{font-size:34px;font-weight:900;color:#f7931a;line-height:1.1;width:32px}}
 .is b{{font-size:27px;display:block}}
 .is p{{font-size:21px;color:#aab4c8;margin-top:3px}}
-.ft{{position:absolute;left:56px;right:56px;bottom:26px;font-size:17px;color:#6c7890;line-height:1.5}}
+.pg{{position:absolute;right:56px;bottom:26px;font-size:24px;font-weight:700;color:#f7931a;letter-spacing:1px}}
+.ft{{position:absolute;left:56px;right:230px;bottom:26px;font-size:17px;color:#6c7890;line-height:1.5}}
 </style></head><body>
 <div class="top"><div><div class="k">CRYPTO BRIEFING <span>· by Moni</span></div><h1>{html.escape(data["title"])}</h1></div>
 <div class="date"><b>{html.escape(data["date"])}</b><br>{html.escape(data["asof"])}</div></div>
@@ -133,6 +134,7 @@ h2 i{{font-style:normal;color:#f7931a}}
 {dom_html}
 <h2><i>●</i> 오늘의 핵심 이슈</h2>{issues}
 <div class="ft">가격: {html.escape(data.get('usd_source','OKX'))}(달러)·업비트(원화) / 김프: 환율 {fx:,.1f}원 적용 / RSI(14): 업비트 원화 차트 기준, 붉은색은 30 미만(과매도)·초록색은 70 초과(과매수) / 도미넌스: 시총 비중, OTHERS.D는 상위 10개 제외 · 투자 권유가 아닌 정보 제공용입니다.</div>
+<div class="pg">{html.escape(data.get("page", "1/2 Page"))}</div>
 </body></html>"""
     tmp = tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8"); tmp.write(page); tmp.close()
     subprocess.run(["google-chrome", "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",

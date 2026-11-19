@@ -10,18 +10,28 @@ issue.json:
  "sources": "CoinDesk, FXStreet 등 보도 종합"
 }
 글 분량 기준: lead 110자 이내, bullet 한 개 45자 이내, 전체 bullet 10개 이내.
+강조 표기(반드시 사용): lead·bullets·note 문장 안에서
+  [[...]] = 숫자·금액·비율·날짜 (주황색)   예: "공모가보다 약 [[24%]] 높게 거래"
+  **...** = 기업·코인·기관·상품 등 명칭 (하늘색)  예: "**OKX** 상장 전 선물"
+한 문장에 1~3곳만 강조한다. 우측 하단에는 "2/2 Page"가 자동으로 들어간다.
 """
 import json, sys, subprocess, html, os, tempfile
+import re
 E = html.escape
+def R(t):
+    """escape + highlight markup"""
+    t = E(t)
+    t = re.sub(r"\[\[(.+?)\]\]", r'<b class="num">\1</b>', t)
+    return re.sub(r"\*\*(.+?)\*\*", r'<b class="nm">\1</b>', t)
 
 def main():
     d = json.load(open(sys.argv[1], encoding="utf-8")); out = sys.argv[2]
     stats = "".join(f'<div class="st"><span>{E(a)}</span><b>{E(b)}</b><em>{E(c)}</em></div>' for a, b, c in d.get("stats", [])[:3])
-    secs = "".join(f'<div class="sec"><h3><i>{i+1}</i>{E(s["h"])}</h3><ul>' + "".join(f"<li>{E(x)}</li>" for x in s["bullets"]) + "</ul></div>"
+    secs = "".join(f'<div class="sec"><h3><i>{i+1}</i>{E(s["h"])}</h3><ul>' + "".join(f"<li>{R(x)}</li>" for x in s["bullets"]) + "</ul></div>"
                    for i, s in enumerate(d["sections"]))
     note = ""
     if d.get("note"):
-        note = f'<div class="note"><h4>⚠ {E(d["note"]["h"])}</h4><ul>' + "".join(f"<li>{E(x)}</li>" for x in d["note"]["bullets"]) + "</ul></div>"
+        note = f'<div class="note"><h4>⚠ {E(d["note"]["h"])}</h4><ul>' + "".join(f"<li>{R(x)}</li>" for x in d["note"]["bullets"]) + "</ul></div>"
     tag = f'<span class="tag">{E(d["tag"])}</span>' if d.get("tag") else ""
     page = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
@@ -48,14 +58,17 @@ li:before{{content:"";position:absolute;left:10px;top:25px;width:9px;height:9px;
 .note{{margin-top:36px;background:#1a1620;border:1px solid #5a3a1a;border-radius:14px;padding:20px 24px}}
 .note h4{{font-size:27px;color:#ffb454;font-weight:900}}
 .note li{{font-size:25px}}.note li:before{{background:#ffb454}}
-.ft{{position:absolute;left:56px;right:56px;bottom:26px;font-size:17px;color:#6c7890;line-height:1.5}}
+.num{{color:#ffb020;font-weight:700}}.nm{{color:#5cd6e0;font-weight:700}}
+.pg{{position:absolute;right:56px;bottom:26px;font-size:24px;font-weight:700;color:#f7931a;letter-spacing:1px}}
+.ft{{position:absolute;left:56px;right:230px;bottom:26px;font-size:17px;color:#6c7890;line-height:1.5}}
 </style></head><body>
 <div class="top"><div class="k">ISSUE DEEP DIVE <span>· by Moni</span></div><div class="date">{E(d["date"])}</div></div>
 {tag}<h1>{E(d["title"])}</h1>
-<p class="lead">{E(d["lead"])}</p>
+<p class="lead">{R(d["lead"])}</p>
 <div class="stats">{stats}</div>
 {secs}{note}
 <div class="ft">출처: {E(d.get("sources",""))} · 투자 권유가 아닌 정보 제공용입니다.</div>
+<div class="pg">2/2 Page</div>
 </body></html>"""
     tmp = tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8"); tmp.write(page); tmp.close()
     subprocess.run(["google-chrome", "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
