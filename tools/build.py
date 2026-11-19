@@ -15,7 +15,7 @@ data.json:
  "height": 2030,   (optional. 포스터 높이를 강제로 맞출 때)
  "onchain": {"realized": 53477, "realized_note": "11/18",
              "mining_cost": 77443, "mining_note": "11/17",            (평균 채굴원가=생산비용, 달러. 없으면 칸이 빠진다)
-             "mining_sub": "평균 채굴원가는 MacroMicro 기준 · 다른 추정: MARA 3분기 $62,862 · JP모건 $78,000"},  (출처와 다른 추정치 한 줄, 선택. note는 날짜만 짧게)
+             "mining_sub": "평균 채굴원가는 MacroMicro 기준 · 다른 추정: MARA 3분기 [[$62,862]] · JP모건 [[$78,000]]"},  (출처와 다른 추정치 한 줄, 선택. 가격은 [[...]]로 감싸면 갈색으로 강조된다. note는 날짜만 짧게)
             (delta는 넣지 않는다: 스크립트가 "실현가격 - 전체 기간 평균 가격"으로 자동 계산한다.)
             (가운데 "실현가격 75%" 칸은 realized × 0.75 로 스크립트가 자동 계산한다.)
             (optional. BTC 실현가격·델타가격(달러). 값이 있으면 포스터 높이가 2030px로 늘어난다.
@@ -187,9 +187,9 @@ def main():
                    + tile("실현가격", "Realized Price", oc.get("realized"), oc.get("realized_note", ""), "#ff5d6c")
                    + tile("실현가격 75%", "RP × 0.75", float(oc["realized"])*0.75, "", "#ff8fc7")
                    + tile("델타가격", "Delta Price", oc.get("delta"), oc.get("delta_note", ""), "#b48cff")
-                   + tile("채굴원가", "Production Cost", oc.get("mining_cost"), oc.get("mining_note", ""), "#3fc1c9") + '</div>')
+                   + tile("채굴원가", "Production Cost", oc.get("mining_cost"), oc.get("mining_note", ""), "#c8915a") + '</div>')
         if oc.get("mining_sub"):
-            oc_html += f'<div class="ocs">⛏ 채굴원가 참고: {html.escape(oc["mining_sub"])}</div>'; H += 40
+            oc_html += f'<div class="ocs">⛏ 채굴원가 참고: {R(oc["mining_sub"])}</div>'; H += 40
         res["_onchain"] = oc
     H = max(H, int(data.get("height", 0)))
     issues = "".join(f'<div class="is"><div class="n">{i+1}</div><div><b>{html.escape(re.sub(r"\[\[|\]\]|\*\*", "", t))}</b><p>{R(p)}</p></div></div>'
@@ -225,7 +225,8 @@ h2 small{{font-size:20px;color:#8b97b0;font-weight:400;margin-left:10px}}
 .dt small.en{{display:block;font-size:15px;color:#8b97b0;margin-top:1px}}
 .dt.oc{{flex:1 1 0;min-width:0;padding:14px 14px}}
 .dt.oc small.en,.dt.oc em{{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
-.ocs{{font-size:19px;color:#8fd8de;margin-top:12px;padding-left:4px}}
+.ocs{{font-size:19px;color:#aab4c8;margin-top:12px;padding-left:4px}}
+.ocs .num{{color:#e0a96d;font-weight:700}}
 .dt b{{display:block;font-size:38px;font-weight:900;line-height:1.25}}
 .dt em{{font-style:normal;font-size:19px;color:#8b97b0}}
 .bar{{display:flex;height:14px;border-radius:7px;overflow:hidden;margin-top:14px}}
