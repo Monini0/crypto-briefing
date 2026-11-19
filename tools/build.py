@@ -12,6 +12,9 @@ data.json:
  "coins": {"BTC": {"usd": 63830.1, "chg24h": -0.55 (또는 "usd_open24h": 64148), "krw": 86611000,
                    "d": "2026-11-19:86586000,2026-11-18:...",   (업비트 일봉 종가, date:price)
                    "w": "...", "m": "..."}, "ETH": {...}, "SOL": {...}, "XRP": {...}},
+ "onchain": {"realized": 53477, "realized_note": "11/18 기준", "delta": 30800, "delta_note": "11/18 기준"},
+            (optional. BTC 실현가격·델타가격(달러). 값이 있으면 포스터 높이가 2030px로 늘어난다.
+             이때 build_issue.py의 issue.json에도 "height": 2030 을 넣어 좌우 높이를 맞춘다. delta를 못 구하면 delta 키를 뺀다.)
  "issues": [["제목", "한 줄 설명"], ... 5개]
 }
 강조 표기(반드시 사용): issues의 설명(둘째 항목)에만 쓴다. 제목은 강조 없이 흰색 그대로 둔다.
@@ -157,11 +160,25 @@ def main():
                     + "".join(f'<div class="dt" style="border-top-color:{c}"><span>{a}</span><b style="color:{c}">{v:.2f}%</b><em>{k}</em></div>' for a, k, v, c in tiles)
                     + '</div><div class="bar">' + "".join(f'<i style="width:{v}%;background:{c}"></i>' for a, k, v, c in tiles)
                     + f'<i style="width:{rest}%;background:#2a3350"></i></div>')
+    oc_html = ""; H = 1830
+    oc = data.get("onchain")
+    if oc and oc.get("realized"):
+        H += 200; px = data["coins"]["BTC"]["usd"]
+        def tile(label, en, val, note, color):
+            if not val: return ""
+            diff = (px/float(val)-1)*100
+            pos = f"현재가가 {abs(diff):.1f}% {'위' if diff >= 0 else '아래'}"
+            return (f'<div class="dt" style="border-top-color:{color}"><span>{label} <small>{en}</small></span>'
+                    f'<b style="color:{color}">${float(val):,.0f}</b><em>{pos}{" · " + html.escape(note) if note else ""}</em></div>')
+        oc_html = ('<h2><i>●</i> BTC 온체인 가격 <small>현재가 ' + usd_fmt(px) + '</small></h2><div class="dom">'
+                   + tile("실현가격", "Realized Price", oc.get("realized"), oc.get("realized_note", ""), "#f7931a")
+                   + tile("델타가격", "Delta Price", oc.get("delta"), oc.get("delta_note", ""), "#b48cff") + '</div>')
+        res["_onchain"] = oc
     issues = "".join(f'<div class="is"><div class="n">{i+1}</div><div><b>{html.escape(re.sub(r"\[\[|\]\]|\*\*", "", t))}</b><p>{R(p)}</p></div></div>'
                      for i, (t, p) in enumerate(data["issues"][:5]))
     page = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{width:1080px;height:1830px;background:#0b0f1a;color:#e9edf5;font-family:"Noto Sans CJK KR","Noto Sans KR",sans-serif;padding:56px 56px 40px;position:relative;overflow:hidden}}
+body{{width:1080px;height:{H}px;background:#0b0f1a;color:#e9edf5;font-family:"Noto Sans CJK KR","Noto Sans KR",sans-serif;padding:56px 56px 40px;position:relative;overflow:hidden}}
 body:before{{content:"";position:absolute;right:-220px;top:-220px;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle,#f7931a33,transparent 65%)}}
 .top{{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #f7931a;padding-bottom:22px}}
 .k{{font-size:22px;letter-spacing:6px;color:#f7931a;font-weight:700}}
@@ -187,6 +204,7 @@ h2 small{{font-size:20px;color:#8b97b0;font-weight:400;margin-left:10px}}
 .dom{{display:flex;gap:14px}}
 .dt{{flex:1;background:#111727;border-top:4px solid;border-radius:12px;padding:14px 16px}}
 .dt span{{display:block;font-size:20px;color:#aab4c8;font-weight:700}}
+.dt span small{{font-size:16px;color:#8b97b0;font-weight:400;margin-left:6px}}
 .dt b{{display:block;font-size:38px;font-weight:900;line-height:1.25}}
 .dt em{{font-style:normal;font-size:19px;color:#8b97b0}}
 .bar{{display:flex;height:14px;border-radius:7px;overflow:hidden;margin-top:14px}}
@@ -208,13 +226,14 @@ h2 i{{font-style:normal;color:#f7931a}}
 <div class="mood">{pills}</div>
 <table><tr><th>코인</th><th>달러 / 원화</th><th>24시간</th><th>김프</th><th>RSI 일봉</th><th>주봉</th><th>월봉</th></tr>{rows}</table>
 {dom_html}
+{oc_html}
 <h2><i>●</i> 오늘의 핵심 이슈</h2>{issues}
 <div class="ft">가격: {html.escape(data.get('usd_source','OKX'))}(달러)·업비트(원화) / 김프: 환율 {fx:,.0f}원 적용 / RSI(14): 업비트 원화 차트 기준, 붉은색은 30 미만(과매도)·초록색은 70 초과(과매수) / 도미넌스: 시총 비중, OTHERS.D는 상위 10개 제외 · 투자 권유가 아닌 정보 제공용입니다.</div>
 <div class="pg">{html.escape(data.get("page", "1/2 Page"))}</div>
 </body></html>"""
     tmp = tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8"); tmp.write(page); tmp.close()
     subprocess.run(["google-chrome", "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
-                    "--force-device-scale-factor=1", "--window-size=1080,1830",
+                    "--force-device-scale-factor=1", f"--window-size=1080,{H}",
                     f"--screenshot={os.path.abspath(out_png)}", "file://"+tmp.name],
                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print(json.dumps(res, ensure_ascii=False, indent=1))

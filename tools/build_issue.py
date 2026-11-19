@@ -32,10 +32,11 @@ def main():
     note = ""
     if d.get("note"):
         note = f'<div class="note"><h4>⚠ {E(d["note"]["h"])}</h4><ul>' + "".join(f"<li>{R(x)}</li>" for x in d["note"]["bullets"]) + "</ul></div>"
+    H = int(d.get("height", 1830))
     tag = f'<span class="tag">{E(d["tag"])}</span>' if d.get("tag") else ""
     page = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{width:1080px;height:1830px;background:#0b0f1a;color:#e9edf5;font-family:"Noto Sans CJK KR","Noto Sans KR",sans-serif;padding:56px 56px 40px;position:relative;overflow:hidden}}
+body{{width:1080px;height:{H}px;background:#0b0f1a;color:#e9edf5;font-family:"Noto Sans CJK KR","Noto Sans KR",sans-serif;padding:56px 56px 40px;position:relative;overflow:hidden}}
 body:before{{content:"";position:absolute;left:-240px;top:-240px;width:680px;height:680px;border-radius:50%;background:radial-gradient(circle,#f7931a2e,transparent 65%)}}
 .top{{display:flex;justify-content:space-between;align-items:center;position:relative}}
 .k{{font-size:22px;letter-spacing:6px;color:#f7931a;font-weight:700}}
@@ -72,7 +73,7 @@ li:before{{content:"";position:absolute;left:10px;top:25px;width:9px;height:9px;
 </body></html>"""
     tmp = tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8"); tmp.write(page); tmp.close()
     subprocess.run(["google-chrome", "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
-                    "--force-device-scale-factor=1", "--window-size=1080,1830",
+                    "--force-device-scale-factor=1", f"--window-size=1080,{H}",
                     f"--screenshot={os.path.abspath(out)}", "file://"+tmp.name],
                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
