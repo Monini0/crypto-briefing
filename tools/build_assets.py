@@ -22,7 +22,9 @@ def main():
     for row in d["rows"][:20]:
         r, mv, name, cat, tk, price, cap, chg = row[:8]
         country = row[8] if len(row) > 8 else ""; y1 = row[9] if len(row) > 9 else None
-        y1h = '<td class="dim">–</td>' if y1 is None else f'<td class="{"grn" if y1 > 0 else "red"}">{y1:+.1f}%</td>'
+        if y1 is None: y1h = '<td class="dim">–</td>'
+        elif isinstance(y1, str): y1h = f'<td class="dim" style="font-size:18px">{E(y1)}</td>'
+        else: y1h = f'<td class="{"grn" if y1 > 0 else "red"}">{y1:+.1f}%</td>'
         flag = FLAG.get(country, "🌐")
         col = CAT.get(cat, "#3fc1c9"); hot = ' class="hot"' if cat == "암호화폐" else ""
         mvh = ""
@@ -32,7 +34,7 @@ def main():
         cc = "grn" if chg > 0 else ("red" if chg < 0 else "")
         rows += (f'<tr{hot}><td class="rk"><b>{r}</b>{mvh}</td><td class="nm"><span class="dot" style="background:{col}"></span>{badge(name, tk)}<div><b>{E(name)} <em>{flag}</em></b>'
                  f'<small>{E(cat)}{" · " + E(tk) if tk else ""}{" · " + E(country) if country else ""}</small></div></td><td>{E(price)}</td><td class="cap">{E(cap)}</td><td class="{cc}">{chg:+.2f}%</td>{y1h}</tr>')
-    H = 330 + 71*min(20, len(d["rows"])) + 110
+    H = 330 + 71*min(20, len(d["rows"])) + 135
     page = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:1080px;height:{H}px;background:#0b0f1a;color:#e9edf5;font-family:"Noto Sans CJK KR","Noto Sans KR",sans-serif;padding:56px 56px 40px;position:relative;overflow:hidden}}
@@ -65,7 +67,7 @@ tr.hot td{{background:#2a1c08}}tr.hot td.nm b{{color:#f7931a}}
 <p class="sub">금부터 비트코인까지, 세상에서 가장 큰 자산 TOP 20</p>
 <table><tr><th>순위</th><th>자산</th><th>가격</th><th>시가총액</th><th>오늘</th><th>1년</th></tr>{rows}</table>
 <div class="lg"><span><i style="background:#3fc1c9"></i>주식</span><span><i style="background:#ffc531"></i>귀금속</span><span><i style="background:#f7931a"></i>암호화폐</span><span><i style="background:#8c9eff"></i>ETF</span><span>▲▼ 전일 대비 순위 변동</span></div>
-<div class="ft">자료: {E(d.get("source",""))} · 귀금속 시가총액은 추정치 · 투자 권유가 아닌 정보 제공용입니다.</div>
+<div class="ft">자료: {E(d.get("source",""))} · {E(d.get("y1_note","1년 등락률은 주가 기준"))} · 귀금속 시가총액은 추정치 · 투자 권유가 아닌 정보 제공용입니다.</div>
 </body></html>"""
     tmp = tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8"); tmp.write(page); tmp.close()
     subprocess.run(["google-chrome", "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=1",
