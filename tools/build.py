@@ -6,7 +6,9 @@ data.json:
  "title": "크립토 아침 브리핑", "date": "2026.11.20 (금)", "asof": "08:55 KST 기준",
  "fx": 1330.0, "fx_label": "원/달러 환율 (주간 종가)",
  "fear_greed": "10 · 극단적 공포",            (optional)
- "coins": {"BTC": {"usd": 63830.1, "usd_open24h": 64148, "krw": 86611000,
+ "dominance": {"total_mcap": 2182549664066, "asof": "CoinLore",        (optional section)
+               "top10": [["BTC",1272553557787],["ETH",221015637828],["USDT",...], ... 시총 상위 10개]},
+ "coins": {"BTC": {"usd": 63830.1, "chg24h": -0.55 (또는 "usd_open24h": 64148), "krw": 86611000,
                    "d": "2026-11-19:86586000,2026-11-18:...",   (업비트 일봉 종가, date:price)
                    "w": "...", "m": "..."}, "ETH": {...}, "SOL": {...}, "XRP": {...}},
  "issues": [["제목", "한 줄 설명"], ... 5개]
@@ -32,6 +34,17 @@ def rsi(c, n=14):
         ag = (ag*(n-1)+g[i])/n; al = (al*(n-1)+l[i])/n
     return 100.0 if al == 0 else 100-100/(1+ag/al)
 
+ICON = {"BTC": "₿", "ETH": "Ξ", "SOL": "S", "XRP": "X"}
+
+def dominance(dm):
+    """BTC.D / ETH.D / OTHERS.D(시총 상위 10개 제외) / 스테이블(USDT+USDC) 비중(%)"""
+    tot = float(dm["total_mcap"]); caps = {k.upper(): float(v) for k, v in dm["top10"][:10]}
+    if len(caps) < 10: sys.exit("dominance: top10 needs 10 coins")
+    pct = lambda v: round(v/tot*100, 2)
+    return {"btc_d": pct(caps["BTC"]), "eth_d": pct(caps["ETH"]),
+            "others_d": pct(tot-sum(caps.values())),
+            "stable_d": pct(caps.get("USDT", 0)+caps.get("USDC", 0)), "total_mcap": tot}
+
 def usd_fmt(v):
     return f"${v:,.0f}" if v >= 10000 else (f"${v:,.2f}" if v >= 10 else f"${v:,.4f}")
 
@@ -40,7 +53,7 @@ def main():
     fx = float(data["fx"]); res = {}; rows = ""
     for sym, c in data["coins"].items():
         r = {"usd": c["usd"], "krw": c["krw"],
-             "chg": round((c["usd"]/c["usd_open24h"]-1)*100, 2),
+             "chg": round(float(c["chg24h"]), 2) if "chg24h" in c else round((c["usd"]/c["usd_open24h"]-1)*100, 2),
              "kimp": round((c["krw"]/(c["usd"]*fx)-1)*100, 2)}
         for tf in "dwm":
             m = parse(c[tf]); keys = sorted(m)
@@ -51,7 +64,7 @@ def main():
         res[sym] = r
         cls = "grn" if r["chg"] >= 0 else "red"
         def cell(v): return f'<td class="{"os" if v < 30 else ("ob" if v > 70 else "")}">{v:.1f}</td>'
-        rows += (f'<tr><td class="c">{sym}</td><td>{usd_fmt(r["usd"])}<small>{r["krw"]:,.0f}원</small></td>'
+        rows += (f'<tr><td class="c"><span class="ic ic-{sym}">{ICON.get(sym, sym[0])}</span>{sym}</td><td>{usd_fmt(r["usd"])}<small>{r["krw"]:,.0f}원</small></td>'
                  f'<td class="{cls}">{r["chg"]:+.2f}%</td><td class="org">{r["kimp"]:+.2f}%</td>'
                  f'{cell(r["rsi_d"])}{cell(r["rsi_w"])}{cell(r["rsi_m"])}</tr>')
     first = next(iter(res.values()))
@@ -60,11 +73,21 @@ def main():
         pills += f'<div class="pill"><span>공포·탐욕 지수</span><b class="red">{html.escape(data["fear_greed"])}</b></div>'
     pills += f'<div class="pill"><span>{html.escape(data.get("fx_label","원/달러 환율"))}</span><b>{fx:,.1f}원</b></div>'
     pills += f'<div class="pill"><span>김치프리미엄 (BTC)</span><b class="org">{res["BTC"]["kimp"]:+.2f}%</b></div>'
+    dom_html = ""
+    if data.get("dominance"):
+        d = dominance(data["dominance"]); res["_dominance"] = d
+        rest = max(0.0, 100-d["btc_d"]-d["eth_d"]-d["others_d"]-d["stable_d"])
+        tiles = [("BTC.D", "비트 도미", d["btc_d"], "#f7931a"), ("ETH.D", "이더 도미", d["eth_d"], "#8c9eff"),
+                 ("OTHERS.D", "알트 도미", d["others_d"], "#2fd08a"), ("USDT.D+USDC.D", "스테이블 도미", d["stable_d"], "#3fc1c9")]
+        dom_html = ('<h2><i>●</i> 도미넌스 <small>전체 시총 $' + f'{d["total_mcap"]/1e12:,.2f}' + '조</small></h2><div class="dom">'
+                    + "".join(f'<div class="dt" style="border-top-color:{c}"><span>{a}</span><b style="color:{c}">{v:.2f}%</b><em>{k}</em></div>' for a, k, v, c in tiles)
+                    + '</div><div class="bar">' + "".join(f'<i style="width:{v}%;background:{c}"></i>' for a, k, v, c in tiles)
+                    + f'<i style="width:{rest}%;background:#2a3350"></i></div>')
     issues = "".join(f'<div class="is"><div class="n">{i+1}</div><div><b>{html.escape(t)}</b><p>{html.escape(p)}</p></div></div>'
                      for i, (t, p) in enumerate(data["issues"][:5]))
     page = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{width:1080px;height:1560px;background:#0b0f1a;color:#e9edf5;font-family:"Noto Sans CJK KR","Noto Sans KR",sans-serif;padding:56px 56px 40px;position:relative;overflow:hidden}}
+body{{width:1080px;height:1830px;background:#0b0f1a;color:#e9edf5;font-family:"Noto Sans CJK KR","Noto Sans KR",sans-serif;padding:56px 56px 40px;position:relative;overflow:hidden}}
 body:before{{content:"";position:absolute;right:-220px;top:-220px;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle,#f7931a33,transparent 65%)}}
 .top{{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #f7931a;padding-bottom:22px}}
 .k{{font-size:22px;letter-spacing:6px;color:#f7931a;font-weight:700}}
@@ -82,7 +105,17 @@ th{{font-size:19px;color:#8b97b0;font-weight:500;padding:13px 10px;background:#1
 th:first-child,td:first-child{{text-align:left;padding-left:22px}}
 td{{padding:15px 10px;text-align:right;font-size:26px;font-weight:700;border-top:1px solid #1e2740}}
 td small{{display:block;font-size:19px;color:#8b97b0;font-weight:400}}
-td.c{{font-size:32px;font-weight:900}}
+td.c{{font-size:32px;font-weight:900;white-space:nowrap}}
+.ic{{display:inline-flex;width:46px;height:46px;border-radius:50%;align-items:center;justify-content:center;font-size:27px;font-weight:900;color:#fff;margin-right:14px;vertical-align:middle;font-family:"DejaVu Sans","Noto Sans CJK KR",sans-serif}}
+.ic-BTC{{background:#f7931a}}.ic-ETH{{background:#5b6ee1}}.ic-SOL{{background:#8a4fe0}}.ic-XRP{{background:#3a4358;border:2px solid #9aa6bd}}
+h2 small{{font-size:20px;color:#8b97b0;font-weight:400;margin-left:10px}}
+.dom{{display:flex;gap:14px}}
+.dt{{flex:1;background:#111727;border-top:4px solid;border-radius:12px;padding:14px 16px}}
+.dt span{{display:block;font-size:20px;color:#aab4c8;font-weight:700}}
+.dt b{{display:block;font-size:38px;font-weight:900;line-height:1.25}}
+.dt em{{font-style:normal;font-size:19px;color:#8b97b0}}
+.bar{{display:flex;height:14px;border-radius:7px;overflow:hidden;margin-top:14px}}
+.bar i{{display:block;height:100%}}
 td:last-child,th:last-child{{padding-right:22px}}
 .os{{color:#ff5d6c}}.ob{{color:#2fd08a}}
 h2{{font-size:30px;margin:30px 0 14px;font-weight:900}}
@@ -97,12 +130,13 @@ h2 i{{font-style:normal;color:#f7931a}}
 <div class="date"><b>{html.escape(data["date"])}</b><br>{html.escape(data["asof"])}</div></div>
 <div class="mood">{pills}</div>
 <table><tr><th>코인</th><th>달러 / 원화</th><th>24시간</th><th>김프</th><th>RSI 일봉</th><th>주봉</th><th>월봉</th></tr>{rows}</table>
+{dom_html}
 <h2><i>●</i> 오늘의 핵심 이슈</h2>{issues}
-<div class="ft">가격: OKX(USDT)·업비트(원화) / 김프: 환율 {fx:,.1f}원 적용 / RSI(14): 업비트 원화 차트 기준, 붉은색은 30 미만(과매도)·초록색은 70 초과(과매수) · 투자 권유가 아닌 정보 제공용입니다.</div>
+<div class="ft">가격: {html.escape(data.get('usd_source','OKX'))}(달러)·업비트(원화) / 김프: 환율 {fx:,.1f}원 적용 / RSI(14): 업비트 원화 차트 기준, 붉은색은 30 미만(과매도)·초록색은 70 초과(과매수) / 도미넌스: 시총 비중, OTHERS.D는 상위 10개 제외 · 투자 권유가 아닌 정보 제공용입니다.</div>
 </body></html>"""
     tmp = tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8"); tmp.write(page); tmp.close()
     subprocess.run(["google-chrome", "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
-                    "--force-device-scale-factor=1", "--window-size=1080,1560",
+                    "--force-device-scale-factor=1", "--window-size=1080,1830",
                     f"--screenshot={os.path.abspath(out_png)}", "file://"+tmp.name],
                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print(json.dumps(res, ensure_ascii=False, indent=1))
