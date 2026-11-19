@@ -12,7 +12,9 @@ data.json:
  "coins": {"BTC": {"usd": 63830.1, "chg24h": -0.55 (또는 "usd_open24h": 64148), "krw": 86611000,
                    "d": "2026-11-19:86586000,2026-11-18:...",   (업비트 일봉 종가, date:price)
                    "w": "...", "m": "..."}, "ETH": {...}, "SOL": {...}, "XRP": {...}},
- "onchain": {"realized": 53477, "realized_note": "11/18", "delta": 30800, "delta_note": "11/18"},
+ "height": 2030,   (optional. 포스터 높이를 강제로 맞출 때)
+ "onchain": {"realized": 53477, "realized_note": "11/18"},
+            (delta는 넣지 않는다: 스크립트가 "실현가격 - 전체 기간 평균 가격"으로 자동 계산한다.)
             (가운데 "실현가격 75%" 칸은 realized × 0.75 로 스크립트가 자동 계산한다.)
             (optional. BTC 실현가격·델타가격(달러). 값이 있으면 포스터 높이가 2030px로 늘어난다.
              이때 build_issue.py의 issue.json에도 "height": 2030 을 넣어 좌우 높이를 맞춘다. delta를 못 구하면 delta 키를 뺀다.)
@@ -162,9 +164,17 @@ def main():
                     + '</div><div class="bar">' + "".join(f'<i style="width:{v}%;background:{c}"></i>' for a, k, v, c in tiles)
                     + f'<i style="width:{rest}%;background:#2a3350"></i></div>')
     oc_html = ""; H = 1830
+    # 델타가격 = 실현가격 - (전체 기간 평균 가격). 전체 기간 평균은 2010-08-17부터의 일별 가격 평균으로,
+    # 2026-11-18 기준 약 $22,554(5,937일, blockchain.info 가격 자료로 계산). 이후 날짜는 현재가로 이어 붙여 갱신한다.
+    def ltd_avg(px_now):
+        import datetime
+        d = max(0, (datetime.date.today() - datetime.date(2026, 11, 18)).days)
+        return (22554.0*5937 + px_now*d) / (5937 + d)
     oc = data.get("onchain")
     if oc and oc.get("realized"):
         H += 200; px = data["coins"]["BTC"]["usd"]
+        if not oc.get("delta"):
+            oc["delta"] = round(float(oc["realized"]) - ltd_avg(px)); oc.setdefault("delta_note", "자체 계산")
         def tile(label, en, val, note, color):
             if not val: return ""
             diff = (px/float(val)-1)*100
@@ -176,6 +186,7 @@ def main():
                    + tile("실현가격 75%", "RP × 0.75", float(oc["realized"])*0.75, "", "#ff8fc7")
                    + tile("델타가격", "Delta Price", oc.get("delta"), oc.get("delta_note", ""), "#b48cff") + '</div>')
         res["_onchain"] = oc
+    H = max(H, int(data.get("height", 0)))
     issues = "".join(f'<div class="is"><div class="n">{i+1}</div><div><b>{html.escape(re.sub(r"\[\[|\]\]|\*\*", "", t))}</b><p>{R(p)}</p></div></div>'
                      for i, (t, p) in enumerate(data["issues"][:5]))
     page = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><style>
