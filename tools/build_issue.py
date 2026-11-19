@@ -68,7 +68,7 @@ li:before{{content:"";position:absolute;left:10px;top:25px;width:9px;height:9px;
 <div class="stats">{stats}</div>
 {secs}{note}
 <div class="ft">출처: {E(d.get("sources",""))} · 투자 권유가 아닌 정보 제공용입니다.</div>
-<div class="pg">2/2 Page</div>
+<div class="pg">{E(d.get("page", "2/2 Page"))}</div>
 </body></html>"""
     tmp = tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8"); tmp.write(page); tmp.close()
     subprocess.run(["google-chrome", "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
