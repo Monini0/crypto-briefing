@@ -96,11 +96,14 @@ BUNNY = {
 }
 FG_LEVELS = [(24, "extreme_fear", "극단적 공포", "#ff5d6c"), (44, "fear", "공포", "#ff9a57"), (55, "neutral", "중립", "#e9edf5"),
              (75, "greed", "탐욕", "#7fdc8f"), (100, "extreme_greed", "극단적 탐욕", "#2fd08a")]
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from bunny import bunny as _bunny_svg
+BUNNY_STYLE = "B"   # "A" = 흰 토끼(첫 번째 캐릭터), "B" = 크림색 토끼(두 번째 캐릭터)
 def fear_greed(v):
     """0~100 값을 (라벨, 색, 토끼 아이콘)으로. 0-24 극단적 공포 / 25-44 공포 / 45-55 중립 / 56-75 탐욕 / 76-100 극단적 탐욕"""
     for hi, key, label, color in FG_LEVELS:
-        if v <= hi: return label, color, BUNNY[key]
-    return FG_LEVELS[-1][2], FG_LEVELS[-1][3], BUNNY["extreme_greed"]
+        if v <= hi: return label, color, _bunny_svg(BUNNY_STYLE, key)
+    return FG_LEVELS[-1][2], FG_LEVELS[-1][3], _bunny_svg(BUNNY_STYLE, "extreme_greed")
 
 DOLLAR_ICON = ('<svg class="pi" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="42" fill="#2e9e5b" stroke="#1d6b3d" stroke-width="4"/>'
                '<circle cx="50" cy="50" r="33" fill="none" stroke="#7fdca0" stroke-width="2.5" stroke-dasharray="3 5"/>'
@@ -168,7 +171,7 @@ h1{{font-size:68px;font-weight:900;line-height:1.1;margin-top:6px}}
 .date b{{color:#fff;font-size:30px}}
 .mood{{margin:26px 0 22px;display:flex;gap:14px}}
 .pill{{flex:1;background:#141a2b;border:1px solid #232c44;border-radius:14px;padding:12px 12px 12px 18px;display:flex;align-items:center;justify-content:space-between;gap:6px}}
-.pi{{width:74px;height:74px;flex:none}}
+.pi{{width:80px;height:80px;flex:none}}
 .pill span{{display:block;font-size:19px;color:#8b97b0}}
 .pill b{{font-size:28px;white-space:nowrap}}
 .red{{color:#ff5d6c}}.grn{{color:#2fd08a}}.org{{color:#f7931a}}
