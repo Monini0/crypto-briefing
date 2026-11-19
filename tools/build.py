@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""Crypto briefing poster builder.
+Usage: python3 tools/build.py data.json out.png
+data.json:
+{
+ "title": "크립토 아침 브리핑", "date": "2026.11.20 (금)", "asof": "08:55 KST 기준",
+ "fx": 1330.0, "fx_label": "원/달러 환율 (주간 종가)",
+ "fear_greed": "10 · 극단적 공포",            (optional)
+ "coins": {"BTC": {"usd": 63830.1, "usd_open24h": 64148, "krw": 86611000,
+                   "d": "2026-11-19:86586000,2026-11-18:...",   (업비트 일봉 종가, date:price)
+                   "w": "...", "m": "..."}, "ETH": {...}, "SOL": {...}, "XRP": {...}},
+ "issues": [["제목", "한 줄 설명"], ... 5개]
+}
+Prints computed numbers as JSON (use them for the Telegram caption) and writes the PNG.
+RSI = Wilder RSI(14); the newest candle is replaced by the live KRW price.
+"""
+import json, sys, subprocess, html, os, tempfile
+
+def parse(s):
+    d = {}
+    for t in s.replace("\n", "").split(","):
+        t = t.strip()
+        if t:
+            k, v = t.rsplit(":", 1); d[k.strip()] = float(v)
+    return d
+
+def rsi(c, n=14):
+    g = [max(c[i]-c[i-1], 0) for i in range(1, len(c))]
+    l = [max(c[i-1]-c[i], 0) for i in range(1, len(c))]
+    ag, al = sum(g[:n])/n, sum(l[:n])/n
+    for i in range(n, len(g)):
+        ag = (ag*(n-1)+g[i])/n; al = (al*(n-1)+l[i])/n
+    return 100.0 if al == 0 else 100-100/(1+ag/al)
+
+def usd_fmt(v):
+    return f"${v:,.0f}" if v >= 10000 else (f"${v:,.2f}" if v >= 10 else f"${v:,.4f}")
+
+def main():
+    data = json.load(open(sys.argv[1], encoding="utf-8")); out_png = sys.argv[2]
+    fx = float(data["fx"]); res = {}; rows = ""
+    for sym, c in data["coins"].items():
+        r = {"usd": c["usd"], "krw": c["krw"],
+             "chg": round((c["usd"]/c["usd_open24h"]-1)*100, 2),
+             "kimp": round((c["krw"]/(c["usd"]*fx)-1)*100, 2)}
+        for tf in "dwm":
+            m = parse(c[tf]); keys = sorted(m)
+            if len(keys) < 30: sys.exit(f"{sym} {tf}: candles too few ({len(keys)})")
+            r[tf+"_latest"] = keys[-1]
+            s = [m[k] for k in keys]; s[-1] = c["krw"]
+            r["rsi_"+tf] = round(rsi(s), 1)
+        res[sym] = r
+        cls = "grn" if r["chg"] >= 0 else "red"
+        def cell(v): return f'<td class="{"os" if v < 30 else ("ob" if v > 70 else "")}">{v:.1f}</td>'
+        rows += (f'<tr><td class="c">{sym}</td><td>{usd_fmt(r["usd"])}<small>{r["krw"]:,.0f}원</small></td>'
+                 f'<td class="{cls}">{r["chg"]:+.2f}%</td><td class="org">{r["kimp"]:+.2f}%</td>'
+                 f'{cell(r["rsi_d"])}{cell(r["rsi_w"])}{cell(r["rsi_m"])}</tr>')
+    first = next(iter(res.values()))
+    pills = ""
+    if data.get("fear_greed"):
+        pills += f'<div class="pill"><span>공포·탐욕 지수</span><b class="red">{html.escape(data["fear_greed"])}</b></div>'
+    pills += f'<div class="pill"><span>{html.escape(data.get("fx_label","원/달러 환율"))}</span><b>{fx:,.1f}원</b></div>'
+    pills += f'<div class="pill"><span>김치프리미엄 (BTC)</span><b class="org">{res["BTC"]["kimp"]:+.2f}%</b></div>'
+    issues = "".join(f'<div class="is"><div class="n">{i+1}</div><div><b>{html.escape(t)}</b><p>{html.escape(p)}</p></div></div>'
+                     for i, (t, p) in enumerate(data["issues"][:5]))
+    page = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{width:1080px;height:1560px;background:#0b0f1a;color:#e9edf5;font-family:"Noto Sans CJK KR","Noto Sans KR",sans-serif;padding:56px 56px 40px;position:relative;overflow:hidden}}
+body:before{{content:"";position:absolute;right:-220px;top:-220px;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle,#f7931a33,transparent 65%)}}
+.top{{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #f7931a;padding-bottom:22px}}
+.k{{font-size:22px;letter-spacing:6px;color:#f7931a;font-weight:700}}
+.k span{{letter-spacing:2px;color:#9aa6bd;font-weight:500}}
+h1{{font-size:68px;font-weight:900;line-height:1.1;margin-top:6px}}
+.date{{text-align:right;font-size:24px;color:#9aa6bd;line-height:1.5}}
+.date b{{color:#fff;font-size:30px}}
+.mood{{margin:26px 0 22px;display:flex;gap:14px}}
+.pill{{flex:1;background:#141a2b;border:1px solid #232c44;border-radius:14px;padding:14px 18px}}
+.pill span{{display:block;font-size:19px;color:#8b97b0}}
+.pill b{{font-size:30px}}
+.red{{color:#ff5d6c}}.grn{{color:#2fd08a}}.org{{color:#f7931a}}
+table{{width:100%;border-collapse:collapse;background:#111727;border-radius:16px;overflow:hidden}}
+th{{font-size:19px;color:#8b97b0;font-weight:500;padding:13px 10px;background:#161d31;text-align:right}}
+th:first-child,td:first-child{{text-align:left;padding-left:22px}}
+td{{padding:15px 10px;text-align:right;font-size:26px;font-weight:700;border-top:1px solid #1e2740}}
+td small{{display:block;font-size:19px;color:#8b97b0;font-weight:400}}
+td.c{{font-size:32px;font-weight:900}}
+td:last-child,th:last-child{{padding-right:22px}}
+.os{{color:#ff5d6c}}.ob{{color:#2fd08a}}
+h2{{font-size:30px;margin:30px 0 14px;font-weight:900}}
+h2 i{{font-style:normal;color:#f7931a}}
+.is{{display:flex;gap:18px;align-items:flex-start;background:#111727;border-left:5px solid #f7931a;border-radius:10px;padding:15px 20px;margin-bottom:11px}}
+.n{{font-size:34px;font-weight:900;color:#f7931a;line-height:1.1;width:32px}}
+.is b{{font-size:27px;display:block}}
+.is p{{font-size:21px;color:#aab4c8;margin-top:3px}}
+.ft{{position:absolute;left:56px;right:56px;bottom:26px;font-size:17px;color:#6c7890;line-height:1.5}}
+</style></head><body>
+<div class="top"><div><div class="k">CRYPTO BRIEFING <span>· by Moni</span></div><h1>{html.escape(data["title"])}</h1></div>
+<div class="date"><b>{html.escape(data["date"])}</b><br>{html.escape(data["asof"])}</div></div>
+<div class="mood">{pills}</div>
+<table><tr><th>코인</th><th>달러 / 원화</th><th>24시간</th><th>김프</th><th>RSI 일봉</th><th>주봉</th><th>월봉</th></tr>{rows}</table>
+<h2><i>●</i> 오늘의 핵심 이슈</h2>{issues}
+<div class="ft">가격: OKX(USDT)·업비트(원화) / 김프: 환율 {fx:,.1f}원 적용 / RSI(14): 업비트 원화 차트 기준, 붉은색은 30 미만(과매도)·초록색은 70 초과(과매수) · 투자 권유가 아닌 정보 제공용입니다.</div>
+</body></html>"""
+    tmp = tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8"); tmp.write(page); tmp.close()
+    subprocess.run(["google-chrome", "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
+                    "--force-device-scale-factor=1", "--window-size=1080,1560",
+                    f"--screenshot={os.path.abspath(out_png)}", "file://"+tmp.name],
+                   check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print(json.dumps(res, ensure_ascii=False, indent=1))
+
+if __name__ == "__main__":
+    main()
