@@ -5,7 +5,8 @@ data.json:
 {
  "title": "크립토 아침 브리핑", "date": "2026.11.20 (금)", "asof": "08:55 KST 기준",
  "fx": 1330.0, "fx_label": "원/달러 환율 (주간 종가)",
- "fear_greed": "10 · 극단적 공포",            (optional)
+ "fear_greed": 10,     (optional, 0~100 숫자. 라벨·색·토끼 표정 아이콘은 스크립트가 자동으로 고른다:
+                        0-24 극단적 공포 / 25-44 공포 / 45-55 중립 / 56-75 탐욕 / 76-100 극단적 탐욕)
  "dominance": {"total_mcap": 2182549664066, "asof": "CoinLore",        (optional section)
                "top10": [["BTC",1272553557787],["ETH",221015637828],["USDT",...], ... 시총 상위 10개]},
  "coins": {"BTC": {"usd": 63830.1, "chg24h": -0.55 (또는 "usd_open24h": 64148), "krw": 86611000,
@@ -56,6 +57,61 @@ def dominance(dm):
             "others_d": pct(tot-sum(caps.values())),
             "stable_d": pct(caps.get("USDT", 0)+caps.get("USDC", 0)), "total_mcap": tot}
 
+# ---------- pill icons (original SVG drawings) ----------
+def _bunny(inner):
+    return ('<svg class="pi" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
+            '<g stroke="#5a3b3b" stroke-width="1.6">'
+            '<ellipse cx="33" cy="24" rx="10" ry="23" fill="#fff" transform="rotate(-14 33 24)"/>'
+            '<ellipse cx="67" cy="24" rx="10" ry="23" fill="#fff" transform="rotate(14 67 24)"/></g>'
+            '<ellipse cx="33" cy="26" rx="5" ry="16" fill="#f7a8b0" transform="rotate(-14 33 26)"/>'
+            '<ellipse cx="67" cy="26" rx="5" ry="16" fill="#f7a8b0" transform="rotate(14 67 26)"/>'
+            '<ellipse cx="50" cy="64" rx="37" ry="31" fill="#fff" stroke="#5a3b3b" stroke-width="1.6"/>'
+            + inner + '</svg>')
+_BLUSH = '<ellipse cx="25" cy="72" rx="7.5" ry="4.5" fill="#ffb3bd"/><ellipse cx="75" cy="72" rx="7.5" ry="4.5" fill="#ffb3bd"/>'
+_EYES = '<rect x="33" y="52" width="9" height="17" rx="4.5" fill="#111"/><rect x="58" y="52" width="9" height="17" rx="4.5" fill="#111"/>'
+BUNNY = {
+ # 극단적 공포: 쪼그라든 눈동자, 벌어진 입, 눈물, 이마의 파란 그늘
+ "extreme_fear": _bunny('<path d="M26 40 Q50 30 74 40 L74 46 Q50 38 26 46Z" fill="#9db8ff" opacity=".75"/>'
+   '<g stroke="#6f8fe8" stroke-width="2" stroke-linecap="round"><path d="M40 37v7M50 35v8M60 37v7"/></g>'
+   '<g stroke="#111" stroke-width="2.6" stroke-linecap="round" fill="none"><path d="M30 52l11 4M70 52l-11 4"/></g>'
+   '<circle cx="37" cy="62" r="3.6" fill="#111"/><circle cx="63" cy="62" r="3.6" fill="#111"/>'
+   '<path d="M33 70q-3 8 0 13q4-5 0-13z" fill="#6fb6ff"/><path d="M67 70q3 8 0 13q-4-5 0-13z" fill="#6fb6ff"/>'
+   '<path d="M41 80q3-5 6 0t6 0t6 0q-3 9-9 9t-9-9z" fill="#5a2a33"/>'),
+ # 공포: 걱정 눈썹, 처진 입, 식은땀
+ "fear": _bunny(_BLUSH + '<g stroke="#111" stroke-width="2.6" stroke-linecap="round" fill="none"><path d="M30 50l11-4M70 50l-11-4"/></g>'
+   '<rect x="34" y="54" width="8" height="14" rx="4" fill="#111"/><rect x="58" y="54" width="8" height="14" rx="4" fill="#111"/>'
+   '<path d="M43 84q7-7 14 0" stroke="#111" stroke-width="2.6" stroke-linecap="round" fill="none"/>'
+   '<path d="M80 44q-5 9 0 13q5-4 0-13z" fill="#6fb6ff"/>'),
+ # 중립: 원본과 같은 타원 눈, 일자 입
+ "neutral": _bunny(_BLUSH + _EYES + '<path d="M44 82h12" stroke="#111" stroke-width="2.6" stroke-linecap="round"/>'),
+ # 탐욕: 웃는 눈, 미소
+ "greed": _bunny(_BLUSH + '<g stroke="#111" stroke-width="3.2" stroke-linecap="round" fill="none">'
+   '<path d="M31 63q6.5-10 13 0M56 63q6.5-10 13 0"/><path d="M41 78q9 9 18 0"/></g>'),
+ # 극단적 탐욕: 별 눈, 활짝 벌린 입, 반짝이
+ "extreme_greed": _bunny(_BLUSH
+   + '<path id="st" d="M0-9 2.6-2.8 9-2.8 3.9 1.6 5.6 8 0 4.2-5.6 8-3.9 1.6-9-2.8-2.6-2.8z" fill="#ffb020" stroke="#c97a00" stroke-width=".8" transform="translate(37 60)"/>'
+   '<path d="M0-9 2.6-2.8 9-2.8 3.9 1.6 5.6 8 0 4.2-5.6 8-3.9 1.6-9-2.8-2.6-2.8z" fill="#ffb020" stroke="#c97a00" stroke-width=".8" transform="translate(63 60)"/>'
+   '<path d="M38 75h24q-1 14-12 14t-12-14z" fill="#5a2a33"/><path d="M44 85q6-5 12 0q-6 5-12 0z" fill="#ff8fa0"/>'
+   '<g fill="#ffd76a"><path d="M88 40l1.8 4.6 4.6 1.8-4.6 1.8L88 52.8l-1.8-4.6-4.6-1.8 4.6-1.8z"/><path d="M11 44l1.3 3.3 3.3 1.3-3.3 1.3L11 53.5l-1.3-3.3-3.3-1.3 3.3-1.3z"/></g>'),
+}
+FG_LEVELS = [(24, "extreme_fear", "극단적 공포", "#ff5d6c"), (44, "fear", "공포", "#ff9a57"), (55, "neutral", "중립", "#e9edf5"),
+             (75, "greed", "탐욕", "#7fdc8f"), (100, "extreme_greed", "극단적 탐욕", "#2fd08a")]
+def fear_greed(v):
+    """0~100 값을 (라벨, 색, 토끼 아이콘)으로. 0-24 극단적 공포 / 25-44 공포 / 45-55 중립 / 56-75 탐욕 / 76-100 극단적 탐욕"""
+    for hi, key, label, color in FG_LEVELS:
+        if v <= hi: return label, color, BUNNY[key]
+    return FG_LEVELS[-1][2], FG_LEVELS[-1][3], BUNNY["extreme_greed"]
+
+DOLLAR_ICON = ('<svg class="pi" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="42" fill="#2e9e5b" stroke="#1d6b3d" stroke-width="4"/>'
+               '<circle cx="50" cy="50" r="33" fill="none" stroke="#7fdca0" stroke-width="2.5" stroke-dasharray="3 5"/>'
+               '<text x="50" y="69" font-size="56" font-weight="900" text-anchor="middle" fill="#fff" font-family="DejaVu Sans,Arial,sans-serif">$</text></svg>')
+KIMCHI_ICON = ('<svg class="pi" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
+               '<path d="M22 50q-4-22 12-27q6-10 17-6q10-7 19 2q14 2 11 31z" fill="#e2452f" stroke="#a3271a" stroke-width="2.5"/>'
+               '<g fill="none" stroke="#ffb09a" stroke-width="3" stroke-linecap="round"><path d="M34 46q0-13 8-18M50 46q-1-14 4-22M65 46q2-11-2-18"/></g>'
+               '<g fill="#6cc04a"><ellipse cx="29" cy="30" rx="6" ry="3.5" transform="rotate(-35 29 30)"/><ellipse cx="74" cy="27" rx="6" ry="3.5" transform="rotate(30 74 27)"/><ellipse cx="52" cy="19" rx="5" ry="3"/></g>'
+               '<path d="M10 50h80q-2 26-22 34H32q-20-8-22-34z" fill="#f4f1ea" stroke="#8a8170" stroke-width="2.5"/>'
+               '<path d="M18 60q30 8 64 0" fill="none" stroke="#5b8fd6" stroke-width="3"/><rect x="36" y="84" width="28" height="6" rx="2" fill="#d9d4c7" stroke="#8a8170" stroke-width="2"/></svg>')
+
 def usd_fmt(v):
     return f"${v:,.0f}" if v >= 10000 else (f"${v:,.2f}" if v >= 10 else f"${v:,.4f}")
 
@@ -80,10 +136,14 @@ def main():
                  f'{cell(r["rsi_d"])}{cell(r["rsi_w"])}{cell(r["rsi_m"])}</tr>')
     first = next(iter(res.values()))
     pills = ""
-    if data.get("fear_greed"):
-        pills += f'<div class="pill"><span>공포·탐욕 지수</span><b class="red">{html.escape(data["fear_greed"])}</b></div>'
-    pills += f'<div class="pill"><span>{html.escape(data.get("fx_label","원/달러 환율"))}</span><b>{fx:,.1f}원</b></div>'
-    pills += f'<div class="pill"><span>김치프리미엄 (BTC)</span><b class="org">{res["BTC"]["kimp"]:+.2f}%</b></div>'
+    fg = data.get("fear_greed_value", data.get("fear_greed"))
+    if fg not in (None, ""):
+        m = re.search(r"\d+", str(fg))
+        if m:
+            v = int(m.group()); label, color, face = fear_greed(v); res["_fear_greed"] = {"value": v, "label": label}
+            pills += f'<div class="pill"><div><span>공포·탐욕 지수</span><b style="color:{color}">{v} · {label}</b></div>{face}</div>'
+    pills += f'<div class="pill"><div><span>{html.escape(data.get("fx_label","원/달러 환율"))}</span><b>{fx:,.0f}원</b></div>{DOLLAR_ICON}</div>'
+    pills += f'<div class="pill"><div><span>김치프리미엄 (BTC)</span><b class="org">{res["BTC"]["kimp"]:+.2f}%</b></div>{KIMCHI_ICON}</div>'
     dom_html = ""
     if data.get("dominance"):
         d = dominance(data["dominance"]); res["_dominance"] = d
@@ -107,9 +167,10 @@ h1{{font-size:68px;font-weight:900;line-height:1.1;margin-top:6px}}
 .date{{text-align:right;font-size:24px;color:#9aa6bd;line-height:1.5}}
 .date b{{color:#fff;font-size:30px}}
 .mood{{margin:26px 0 22px;display:flex;gap:14px}}
-.pill{{flex:1;background:#141a2b;border:1px solid #232c44;border-radius:14px;padding:14px 18px}}
+.pill{{flex:1;background:#141a2b;border:1px solid #232c44;border-radius:14px;padding:12px 12px 12px 18px;display:flex;align-items:center;justify-content:space-between;gap:6px}}
+.pi{{width:74px;height:74px;flex:none}}
 .pill span{{display:block;font-size:19px;color:#8b97b0}}
-.pill b{{font-size:30px}}
+.pill b{{font-size:28px;white-space:nowrap}}
 .red{{color:#ff5d6c}}.grn{{color:#2fd08a}}.org{{color:#f7931a}}
 table{{width:100%;border-collapse:collapse;background:#111727;border-radius:16px;overflow:hidden}}
 th{{font-size:19px;color:#8b97b0;font-weight:500;padding:13px 10px;background:#161d31;text-align:right}}
@@ -145,7 +206,7 @@ h2 i{{font-style:normal;color:#f7931a}}
 <table><tr><th>코인</th><th>달러 / 원화</th><th>24시간</th><th>김프</th><th>RSI 일봉</th><th>주봉</th><th>월봉</th></tr>{rows}</table>
 {dom_html}
 <h2><i>●</i> 오늘의 핵심 이슈</h2>{issues}
-<div class="ft">가격: {html.escape(data.get('usd_source','OKX'))}(달러)·업비트(원화) / 김프: 환율 {fx:,.1f}원 적용 / RSI(14): 업비트 원화 차트 기준, 붉은색은 30 미만(과매도)·초록색은 70 초과(과매수) / 도미넌스: 시총 비중, OTHERS.D는 상위 10개 제외 · 투자 권유가 아닌 정보 제공용입니다.</div>
+<div class="ft">가격: {html.escape(data.get('usd_source','OKX'))}(달러)·업비트(원화) / 김프: 환율 {fx:,.0f}원 적용 / RSI(14): 업비트 원화 차트 기준, 붉은색은 30 미만(과매도)·초록색은 70 초과(과매수) / 도미넌스: 시총 비중, OTHERS.D는 상위 10개 제외 · 투자 권유가 아닌 정보 제공용입니다.</div>
 <div class="pg">{html.escape(data.get("page", "1/2 Page"))}</div>
 </body></html>"""
     tmp = tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8"); tmp.write(page); tmp.close()
