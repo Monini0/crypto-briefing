@@ -172,7 +172,7 @@ h1{{font-size:68px;font-weight:900;line-height:1.1;margin-top:6px}}
 .mood{{margin:26px 0 22px;display:flex;gap:14px}}
 .pill{{flex:1;background:#141a2b;border:1px solid #232c44;border-radius:14px;padding:12px 12px 12px 18px;display:flex;align-items:center;justify-content:space-between;gap:6px}}
 .pi{{width:80px;height:80px;flex:none}}
-.pill span{{display:block;font-size:19px;color:#8b97b0}}
+.pill span{{display:block;font-size:18px;color:#8b97b0;white-space:nowrap}}
 .pill b{{font-size:28px;white-space:nowrap}}
 .red{{color:#ff5d6c}}.grn{{color:#2fd08a}}.org{{color:#f7931a}}
 table{{width:100%;border-collapse:collapse;background:#111727;border-radius:16px;overflow:hidden}}
