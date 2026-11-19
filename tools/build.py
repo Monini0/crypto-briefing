@@ -98,7 +98,7 @@ FG_LEVELS = [(24, "extreme_fear", "극단적 공포", "#ff5d6c"), (44, "fear", "
              (75, "greed", "탐욕", "#7fdc8f"), (100, "extreme_greed", "극단적 탐욕", "#2fd08a")]
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from bunny import bunny as _bunny_svg
-BUNNY_STYLE = "B"   # "A" = 흰 토끼(첫 번째 캐릭터), "B" = 크림색 토끼(두 번째 캐릭터)
+BUNNY_STYLE = "A"   # "A" = 흰 토끼(첫 번째 캐릭터), "B" = 크림색 토끼(두 번째 캐릭터)
 def fear_greed(v):
     """0~100 값을 (라벨, 색, 토끼 아이콘)으로. 0-24 극단적 공포 / 25-44 공포 / 45-55 중립 / 56-75 탐욕 / 76-100 극단적 탐욕"""
     for hi, key, label, color in FG_LEVELS:
