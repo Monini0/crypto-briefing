@@ -13,10 +13,21 @@ data.json:
                    "w": "...", "m": "..."}, "ETH": {...}, "SOL": {...}, "XRP": {...}},
  "issues": [["제목", "한 줄 설명"], ... 5개]
 }
+강조 표기(반드시 사용): issues의 제목·설명 안에서
+  [[...]] = 숫자·금액·비율·날짜 (주황색)   예: "[[18일]] 하루 [[3억 달러]] 이상 순유출"
+  **...** = 기업·코인·기관·상품 등 명칭 (하늘색)  예: "**연준** 의사록 '매파' 쇼크"
+한 줄에 1~3곳만 강조한다. 우측 하단에는 "1/2 Page"가 자동으로 들어간다.
 Prints computed numbers as JSON (use them for the Telegram caption) and writes the PNG.
 RSI = Wilder RSI(14); the newest candle is replaced by the live KRW price.
 """
 import json, sys, subprocess, html, os, tempfile
+
+import re
+def R(t):
+    """escape + highlight markup"""
+    t = html.escape(t)
+    t = re.sub(r"\[\[(.+?)\]\]", r'<span class="num">\1</span>', t)
+    return re.sub(r"\*\*(.+?)\*\*", r'<span class="nm">\1</span>', t)
 
 def parse(s):
     d = {}
@@ -83,7 +94,7 @@ def main():
                     + "".join(f'<div class="dt" style="border-top-color:{c}"><span>{a}</span><b style="color:{c}">{v:.2f}%</b><em>{k}</em></div>' for a, k, v, c in tiles)
                     + '</div><div class="bar">' + "".join(f'<i style="width:{v}%;background:{c}"></i>' for a, k, v, c in tiles)
                     + f'<i style="width:{rest}%;background:#2a3350"></i></div>')
-    issues = "".join(f'<div class="is"><div class="n">{i+1}</div><div><b>{html.escape(t)}</b><p>{html.escape(p)}</p></div></div>'
+    issues = "".join(f'<div class="is"><div class="n">{i+1}</div><div><b>{R(t)}</b><p>{R(p)}</p></div></div>'
                      for i, (t, p) in enumerate(data["issues"][:5]))
     page = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
@@ -124,6 +135,7 @@ h2 i{{font-style:normal;color:#f7931a}}
 .n{{font-size:34px;font-weight:900;color:#f7931a;line-height:1.1;width:32px}}
 .is b{{font-size:27px;display:block}}
 .is p{{font-size:21px;color:#aab4c8;margin-top:3px}}
+.num{{color:#ffb020;font-weight:700}}.nm{{color:#5cd6e0;font-weight:700}}
 .pg{{position:absolute;right:56px;bottom:26px;font-size:24px;font-weight:700;color:#f7931a;letter-spacing:1px}}
 .ft{{position:absolute;left:56px;right:230px;bottom:26px;font-size:17px;color:#6c7890;line-height:1.5}}
 </style></head><body>
