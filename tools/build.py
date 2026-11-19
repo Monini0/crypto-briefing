@@ -12,7 +12,8 @@ data.json:
  "coins": {"BTC": {"usd": 63830.1, "chg24h": -0.55 (또는 "usd_open24h": 64148), "krw": 86611000,
                    "d": "2026-11-19:86586000,2026-11-18:...",   (업비트 일봉 종가, date:price)
                    "w": "...", "m": "..."}, "ETH": {...}, "SOL": {...}, "XRP": {...}},
- "onchain": {"realized": 53477, "realized_note": "11/18 기준", "delta": 30800, "delta_note": "11/18 기준"},
+ "onchain": {"realized": 53477, "realized_note": "11/18", "delta": 30800, "delta_note": "11/18"},
+            (가운데 "실현가격 75%" 칸은 realized × 0.75 로 스크립트가 자동 계산한다.)
             (optional. BTC 실현가격·델타가격(달러). 값이 있으면 포스터 높이가 2030px로 늘어난다.
              이때 build_issue.py의 issue.json에도 "height": 2030 을 넣어 좌우 높이를 맞춘다. delta를 못 구하면 delta 키를 뺀다.)
  "issues": [["제목", "한 줄 설명"], ... 5개]
@@ -169,9 +170,10 @@ def main():
             diff = (px/float(val)-1)*100
             pos = f"현재가가 {abs(diff):.1f}% {'위' if diff >= 0 else '아래'}"
             return (f'<div class="dt" style="border-top-color:{color}"><span>{label} <small>{en}</small></span>'
-                    f'<b style="color:{color}">${float(val):,.0f}</b><em>{pos}{" · " + html.escape(note) if note else ""}</em></div>')
+                    f'<b style="color:{color};font-size:36px">${float(val):,.0f}</b><em>{pos}{" · " + html.escape(note) if note else ""}</em></div>')
         oc_html = ('<h2><i>●</i> BTC 온체인 가격 <small>현재가 ' + usd_fmt(px) + '</small></h2><div class="dom">'
                    + tile("실현가격", "Realized Price", oc.get("realized"), oc.get("realized_note", ""), "#f7931a")
+                   + tile("실현가격 75%", "RP × 0.75", float(oc["realized"])*0.75, "", "#5b9bff")
                    + tile("델타가격", "Delta Price", oc.get("delta"), oc.get("delta_note", ""), "#b48cff") + '</div>')
         res["_onchain"] = oc
     issues = "".join(f'<div class="is"><div class="n">{i+1}</div><div><b>{html.escape(re.sub(r"\[\[|\]\]|\*\*", "", t))}</b><p>{R(p)}</p></div></div>'

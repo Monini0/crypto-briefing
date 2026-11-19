@@ -33,6 +33,14 @@ def main():
     if d.get("note"):
         note = f'<div class="note"><h4>⚠ {E(d["note"]["h"])}</h4><ul>' + "".join(f"<li>{R(x)}</li>" for x in d["note"]["bullets"]) + "</ul></div>"
     H = int(d.get("height", 1830))
+    qhtml = ""
+    if d.get("quote", False):      # "quote": true 면 무작위 한 줄 명언을 아래에 넣는다 (height 2030 이상에서만 사용)
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from quotes import pick
+        ko, en, ini, text = pick()
+        qhtml = (f'<div class="qt"><div class="av">{E(ini)}</div><div><span>투자 대가의 한마디</span>'
+                 f'<p>“{E(text)}”</p><b>{E(ko)} <small>{E(en)}</small></b></div></div>')
+        print("quote:", ko)
     tag = f'<span class="tag">{E(d["tag"])}</span>' if d.get("tag") else ""
     page = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
@@ -61,6 +69,11 @@ li:before{{content:"";position:absolute;left:10px;top:25px;width:9px;height:9px;
 .note li{{font-size:25px}}.note li:before{{background:#ffb454}}
 .num{{color:#ffb020;font-weight:700}}.nm{{color:#5cd6e0;font-weight:700}}
 .pg{{position:absolute;right:56px;bottom:26px;font-size:24px;font-weight:700;color:#f7931a;letter-spacing:1px}}
+.qt{{position:absolute;left:56px;right:56px;bottom:96px;display:flex;gap:22px;align-items:center;background:#111727;border:1px solid #232c44;border-radius:16px;padding:20px 24px}}
+.av{{flex:none;width:92px;height:92px;border-radius:50%;background:linear-gradient(135deg,#f7931a,#b8650a);color:#0b0f1a;font-size:34px;font-weight:900;display:flex;align-items:center;justify-content:center;border:3px solid #ffd08a;font-family:"DejaVu Sans","Noto Sans CJK KR",sans-serif}}
+.qt span{{font-size:18px;color:#8b97b0;letter-spacing:1px}}
+.qt p{{font-size:27px;line-height:1.45;color:#fff;font-weight:700;margin:4px 0 6px;word-break:keep-all}}
+.qt b{{font-size:21px;color:#f7931a}}.qt small{{color:#8b97b0;font-weight:400;font-size:17px;margin-left:6px}}
 .ft{{position:absolute;left:56px;right:230px;bottom:26px;font-size:17px;color:#6c7890;line-height:1.5}}
 </style></head><body>
 <div class="top"><div class="k">ISSUE DEEP DIVE <span>· by Moni</span></div><div class="date">{E(d["date"])}</div></div>
@@ -68,6 +81,7 @@ li:before{{content:"";position:absolute;left:10px;top:25px;width:9px;height:9px;
 <p class="lead">{R(d["lead"])}</p>
 <div class="stats">{stats}</div>
 {secs}{note}
+{qhtml}
 <div class="ft">출처: {E(d.get("sources",""))} · 투자 권유가 아닌 정보 제공용입니다.</div>
 <div class="pg">{E(d.get("page", "2/2 Page"))}</div>
 </body></html>"""
