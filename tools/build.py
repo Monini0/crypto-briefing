@@ -172,8 +172,8 @@ def main():
             return (f'<div class="dt" style="border-top-color:{color}"><span>{label} <small>{en}</small></span>'
                     f'<b style="color:{color};font-size:36px">${float(val):,.0f}</b><em>{pos}{" · " + html.escape(note) if note else ""}</em></div>')
         oc_html = ('<h2><i>●</i> BTC 온체인 가격 <small>현재가 ' + usd_fmt(px) + '</small></h2><div class="dom">'
-                   + tile("실현가격", "Realized Price", oc.get("realized"), oc.get("realized_note", ""), "#f7931a")
-                   + tile("실현가격 75%", "RP × 0.75", float(oc["realized"])*0.75, "", "#5b9bff")
+                   + tile("실현가격", "Realized Price", oc.get("realized"), oc.get("realized_note", ""), "#ff5d6c")
+                   + tile("실현가격 75%", "RP × 0.75", float(oc["realized"])*0.75, "", "#ff8fc7")
                    + tile("델타가격", "Delta Price", oc.get("delta"), oc.get("delta_note", ""), "#b48cff") + '</div>')
         res["_onchain"] = oc
     issues = "".join(f'<div class="is"><div class="n">{i+1}</div><div><b>{html.escape(re.sub(r"\[\[|\]\]|\*\*", "", t))}</b><p>{R(p)}</p></div></div>'

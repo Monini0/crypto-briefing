@@ -69,11 +69,11 @@ li:before{{content:"";position:absolute;left:10px;top:25px;width:9px;height:9px;
 .note li{{font-size:25px}}.note li:before{{background:#ffb454}}
 .num{{color:#ffb020;font-weight:700}}.nm{{color:#5cd6e0;font-weight:700}}
 .pg{{position:absolute;right:56px;bottom:26px;font-size:24px;font-weight:700;color:#f7931a;letter-spacing:1px}}
-.qt{{position:absolute;left:56px;right:56px;bottom:96px;display:flex;gap:22px;align-items:center;background:#111727;border:1px solid #232c44;border-radius:16px;padding:20px 24px}}
-.av{{flex:none;width:92px;height:92px;border-radius:50%;background:linear-gradient(135deg,#f7931a,#b8650a);color:#0b0f1a;font-size:34px;font-weight:900;display:flex;align-items:center;justify-content:center;border:3px solid #ffd08a;font-family:"DejaVu Sans","Noto Sans CJK KR",sans-serif}}
-.qt span{{font-size:18px;color:#8b97b0;letter-spacing:1px}}
-.qt p{{font-size:27px;line-height:1.45;color:#fff;font-weight:700;margin:4px 0 6px;word-break:keep-all}}
-.qt b{{font-size:21px;color:#f7931a}}.qt small{{color:#8b97b0;font-weight:400;font-size:17px;margin-left:6px}}
+.qt{{position:absolute;left:56px;right:56px;bottom:92px;display:flex;gap:28px;align-items:center;background:#111727;border:1px solid #f7931a55;border-radius:18px;padding:26px 30px}}
+.av{{flex:none;width:118px;height:118px;border-radius:50%;background:linear-gradient(135deg,#f7931a,#b8650a);color:#0b0f1a;font-size:42px;font-weight:900;display:flex;align-items:center;justify-content:center;border:3px solid #ffd08a;font-family:"DejaVu Sans","Noto Sans CJK KR",sans-serif}}
+.qt span{{font-size:21px;color:#8b97b0;letter-spacing:1px}}
+.qt p{{font-size:33px;line-height:1.45;color:#fff;font-weight:700;margin:4px 0 6px;word-break:keep-all}}
+.qt b{{font-size:25px;color:#f7931a}}.qt small{{color:#8b97b0;font-weight:400;font-size:20px;margin-left:6px}}
 .ft{{position:absolute;left:56px;right:230px;bottom:26px;font-size:17px;color:#6c7890;line-height:1.5}}
 </style></head><body>
 <div class="top"><div class="k">ISSUE DEEP DIVE <span>· by Moni</span></div><div class="date">{E(d["date"])}</div></div>
