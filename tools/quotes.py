@@ -14,5 +14,6 @@ QUOTES = [
  ("필립 피셔", "Philip Fisher", "PF", "주식시장에는 모든 것의 가격은 알지만 가치는 모르는 사람들로 가득하다."),
  ("제시 리버모어", "Jesse Livermore", "JL", "큰돈을 벌어 준 것은 내 생각이 아니라, 진득하게 앉아 있던 것이었다."),
 ]
-def pick():
-    return random.SystemRandom().choice(QUOTES)
+def pick(exclude=()):
+    pool = [q for q in QUOTES if q[0] not in exclude] or QUOTES
+    return random.SystemRandom().choice(pool)

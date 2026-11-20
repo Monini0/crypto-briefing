@@ -37,7 +37,7 @@ def main():
     if d.get("quote", False):      # "quote": true 면 무작위 한 줄 명언을 아래에 넣는다 (height 2030 이상에서만 사용)
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from quotes import pick
-        ko, en, ini, text = pick()
+        ko, en, ini, text = pick(d.get("quote_exclude", []))   # 같은 날 앞서 쓴 인물 제외
         qhtml = (f'<div class="qt"><div class="av">{E(ini)}</div><div><span>투자 대가의 한마디</span>'
                  f'<p>“{E(text)}”</p><b>{E(ko)} <small>{E(en)}</small></b></div></div>')
         print("quote:", ko)
