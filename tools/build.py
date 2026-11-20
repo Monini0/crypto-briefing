@@ -179,8 +179,9 @@ def main():
             oc["delta"] = round(float(oc["realized"]) - ltd_avg(px)); oc.setdefault("delta_note", "자체 계산")
         def tile(label, en, val, note, color):
             if not val: return ""
-            diff = (px/float(val)-1)*100
-            pos = f"현재가 {abs(diff):.1f}% {'위' if diff >= 0 else '아래'}"
+            diff = (float(val)/px-1)*100          # 이 가격이 현재가 대비 몇 % 위/아래인지
+            up = diff > 0                          # 문구 기준: 위=녹색, 아래=빨강
+            pos = (f'현재가 대비 <i class="{"ocu" if up else "ocd"}">{abs(diff):.1f}% {"아래" if diff <= 0 else "위"}</i>')
             return (f'<div class="dt oc" style="border-top-color:{color}"><span>{label}</span><small class="en">{en}{" · " + html.escape(note) if note else ""}</small>'
                     f'<b style="color:{color};font-size:34px">${float(val):,.0f}</b><em>{pos}</em></div>')
         oc_html = ('<h2><i>●</i> BTC 온체인 가격 <small>현재가 ' + usd_fmt(px) + '</small></h2><div class="dom">'
@@ -225,6 +226,7 @@ h2 small{{font-size:20px;color:#8b97b0;font-weight:400;margin-left:10px}}
 .dt small.en{{display:block;font-size:15px;color:#8b97b0;margin-top:1px}}
 .dt.oc{{flex:1 1 0;min-width:0;padding:14px 14px}}
 .dt.oc small.en,.dt.oc em{{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.dt em i.ocu,.dt em i.ocd{{font-style:normal;display:inline;font-weight:800}}.dt em i.ocu{{color:#2fd08a}}.dt em i.ocd{{color:#ff5d6c}}
 .ocs{{font-size:19px;color:#aab4c8;margin-top:12px;padding-left:4px}}
 .ocs .num{{color:#e0a96d;font-weight:700}}
 .dt b{{display:block;font-size:38px;font-weight:900;line-height:1.25}}
