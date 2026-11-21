@@ -5,11 +5,13 @@ issue.json:
  "date": "2026.11.19 (목)", "tag": "이슈 3",                      (tag optional)
  "title": "두 줄 이내 제목", "lead": "2~3문장 요약",
  "stats": [["라벨", "큰 숫자", "보조 설명"], ... 3개],
- "sections": [{"h": "소제목", "bullets": ["짧은 문장", ...2~3개]}, ... 3개],
+ "sections": [{"h": "소제목", "bullets": ["짧은 문장", ...2~3개]}, ... 4개],
+     (4번째는 "앞으로 볼 것"처럼 일정·변수·확인할 지표를 2~3개. 높이 2270에서는 4개 섹션 × 3문장이 알맞다.
+      남는 세로 공간은 스크립트가 섹션 사이에 고르게 나눠 아래 명언 상자 위까지 채운다.)
  "note": {"h": "체크 포인트", "bullets": ["...", "..."]},          (optional, 강조 박스)
  "sources": "CoinDesk, FXStreet 등 보도 종합"
 }
-글 분량 기준: lead 110자 이내, bullet 한 개 45자 이내, 전체 bullet 10개 이내.
+글 분량 기준: lead 110자 이내, bullet 한 개 45자 이내, 섹션 bullet 합계 10~12개 + note 2개.
 강조 표기(반드시 사용): lead·bullets·note 문장 안에서
   [[...]] = 숫자·금액·비율·날짜 (주황색)   예: "공모가보다 약 [[24%]] 높게 거래"
   **...** = 기업·코인·기관·상품 등 명칭 (하늘색)  예: "**OKX** 상장 전 선물"
@@ -44,13 +46,15 @@ def main():
     tag = f'<span class="tag">{E(d["tag"])}</span>' if d.get("tag") else ""
     page = f"""<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{width:1080px;height:{H}px;background:#0b0f1a;color:#e9edf5;font-family:"Noto Sans CJK KR","Noto Sans KR",sans-serif;padding:56px 56px 40px;position:relative;overflow:hidden}}
+body{{width:1080px;height:{H}px;background:#0b0f1a;color:#e9edf5;font-family:"Noto Sans CJK KR","Noto Sans KR",sans-serif;padding:56px 56px {92 if qhtml else 40}px;position:relative;overflow:hidden;display:flex;flex-direction:column}}
+.mid{{flex:1;display:flex;flex-direction:column;justify-content:space-evenly;padding-bottom:10px}}
+.mid .sec,.mid .note{{margin-top:22px}}
 body:before{{content:"";position:absolute;left:-240px;top:-240px;width:680px;height:680px;border-radius:50%;background:radial-gradient(circle,#f7931a2e,transparent 65%)}}
 .top{{display:flex;justify-content:space-between;align-items:center;position:relative}}
 .k{{font-size:22px;letter-spacing:6px;color:#f7931a;font-weight:700}}
 .k span{{letter-spacing:2px;color:#9aa6bd;font-weight:500}}
 .date{{font-size:24px;color:#9aa6bd}}
-.tag{{display:inline-block;margin-top:44px;background:#f7931a;color:#0b0f1a;font-weight:900;font-size:22px;padding:6px 16px;border-radius:8px}}
+.tag{{align-self:flex-start;display:inline-block;margin-top:44px;background:#f7931a;color:#0b0f1a;font-weight:900;font-size:22px;padding:6px 16px;border-radius:8px}}
 h1{{font-size:70px;font-weight:900;line-height:1.22;margin-top:18px;letter-spacing:-1px;word-break:keep-all}}
 .lead{{font-size:29px;line-height:1.6;color:#c6cee0;margin-top:26px;padding-left:22px;border-left:5px solid #f7931a;word-break:keep-all}}
 .stats{{display:flex;gap:14px;margin-top:36px}}
@@ -69,7 +73,7 @@ li:before{{content:"";position:absolute;left:10px;top:25px;width:9px;height:9px;
 .note li{{font-size:25px}}.note li:before{{background:#ffb454}}
 .num{{color:#ffb020;font-weight:700}}.nm{{color:#5cd6e0;font-weight:700}}
 .pg{{position:absolute;right:56px;bottom:26px;font-size:24px;font-weight:700;color:#f7931a;letter-spacing:1px}}
-.qt{{position:absolute;left:56px;right:56px;bottom:92px;display:flex;gap:28px;align-items:center;background:#111727;border:1px solid #f7931a55;border-radius:18px;padding:26px 30px}}
+.qt{{flex:none;display:flex;gap:28px;align-items:center;background:#111727;border:1px solid #f7931a55;border-radius:18px;padding:26px 30px}}
 .av{{flex:none;width:118px;height:118px;border-radius:50%;background:linear-gradient(135deg,#f7931a,#b8650a);color:#0b0f1a;font-size:42px;font-weight:900;display:flex;align-items:center;justify-content:center;border:3px solid #ffd08a;font-family:"DejaVu Sans","Noto Sans CJK KR",sans-serif}}
 .qt span{{font-size:21px;color:#8b97b0;letter-spacing:1px}}
 .qt p{{font-size:33px;line-height:1.45;color:#fff;font-weight:700;margin:4px 0 6px;word-break:keep-all}}
@@ -80,7 +84,7 @@ li:before{{content:"";position:absolute;left:10px;top:25px;width:9px;height:9px;
 {tag}<h1>{E(d["title"])}</h1>
 <p class="lead">{R(d["lead"])}</p>
 <div class="stats">{stats}</div>
-{secs}{note}
+<div class="mid">{secs}{note}</div>
 {qhtml}
 <div class="ft">출처: {E(d.get("sources",""))} · 투자 권유가 아닌 정보 제공용입니다.</div>
 <div class="pg">{E(d.get("page", "2/2 Page"))}</div>

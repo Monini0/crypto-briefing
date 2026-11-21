@@ -21,6 +21,9 @@ data.json:
             (optional. BTC 실현가격·델타가격(달러). 값이 있으면 포스터 높이가 2030px로 늘어난다.
              이때 build_issue.py의 issue.json에도 "height": 2030 을 넣어 좌우 높이를 맞춘다. delta를 못 구하면 delta 키를 뺀다.)
  "issues": [["제목", "한 줄 설명"], ... 5개]
+ MVRV: onchain.realized 가 있으면 스크립트가 MVRV(=BTC 현재가 ÷ 실현가격)를 계산해 온체인 네 칸 아래에 구간 게이지
+       (저평가 <1 / 중립 1~2.4 / 고평가 2.4~3.7 / 과열 ≥3.7)로 넣는다. 이때 높이가 200px 늘어 온체인+채굴원가 참고 줄이
+       모두 있으면 2270px 이 된다 → build_issue.py 의 issue.json 에도 "height": 2270 을 넣는다. 끄려면 "mvrv": false.
 }
 강조 표기(반드시 사용): issues의 설명(둘째 항목)에만 쓴다. 제목은 강조 없이 흰색 그대로 둔다.
   [[...]] = 숫자·금액·비율·날짜 (주황색)   예: "[[18일]] 하루 [[3억 달러]] 이상 순유출"
@@ -184,11 +187,23 @@ def main():
             pos = (f'현재가 대비 <i class="{"ocu" if up else "ocd"}">{abs(diff):.1f}% {"아래" if diff <= 0 else "위"}</i>')
             return (f'<div class="dt oc" style="border-top-color:{color}"><span>{label}</span><small class="en">{en}{" · " + html.escape(note) if note else ""}</small>'
                     f'<b style="color:{color};font-size:34px">${float(val):,.0f}</b><em>{pos}</em></div>')
+        mv = px/float(oc["realized"]); res["_mvrv"] = round(mv, 2)
+        zone = ("저평가 구간", "#3fc1c9") if mv < 1 else ("중립 구간", "#2fd08a") if mv < 2.4 else ("고평가 구간", "#ffb020") if mv < 3.7 else ("과열 구간", "#ff5d6c")
         oc_html = ('<h2><i>●</i> BTC 온체인 가격 <small>현재가 ' + usd_fmt(px) + '</small></h2><div class="dom">'
                    + tile("실현가격", "Realized Price", oc.get("realized"), oc.get("realized_note", ""), "#ff5d6c")
                    + tile("실현가격 75%", "RP × 0.75", float(oc["realized"])*0.75, "", "#ff8fc7")
                    + tile("델타가격", "Delta Price", oc.get("delta"), oc.get("delta_note", ""), "#b48cff")
                    + tile("채굴원가", "Production Cost", oc.get("mining_cost"), oc.get("mining_note", ""), "#c8915a") + '</div>')
+        if data.get("mvrv", True):       # MVRV 게이지 (기본 켜짐, "mvrv": false 로 끌 수 있음)
+            mx = 4.5; pos = min(mv, mx)/mx*100
+            segs = [(0,1,"#3fc1c9","저평가"),(1,2.4,"#2fd08a","중립"),(2.4,3.7,"#ffb020","고평가"),(3.7,mx,"#ff5d6c","과열")]
+            bar = "".join(f'<i style="left:{a/mx*100}%;width:{(b-a)/mx*100}%;background:{c}"><u>{t}</u></i>' for a,b,c,t in segs)
+            ticks = "".join(f'<s style="left:{v/mx*100}%">{v:g}</s>' for v in (1, 2.4, 3.7))
+            oc_html += (f'<div class="mvg"><div class="mvl"><span>MVRV</span><b style="color:{zone[1]}">{mv:.2f}</b>'
+                        f'<em style="color:{zone[1]}">{zone[0]}</em></div><div class="mvb">{bar}{ticks}'
+                        f'<p style="left:{pos}%"></p></div></div>'
+                        '<div class="ocs">MVRV = 현재가 ÷ 실현가격 · 1 미만이면 시장 평균 매수단가보다 싸게 거래되는 구간</div>')
+            H += 200
         if oc.get("mining_sub"):
             oc_html += f'<div class="ocs">⛏ 채굴원가 참고: {R(oc["mining_sub"])}</div>'; H += 40
         res["_onchain"] = oc
@@ -221,6 +236,12 @@ td.c{{font-size:32px;font-weight:900;white-space:nowrap}}
 .ic-BTC{{background:#f7931a}}.ic-ETH{{background:#5b6ee1}}.ic-SOL{{background:#8a4fe0}}.ic-XRP{{background:#3a4358;border:2px solid #9aa6bd}}
 h2 small{{font-size:20px;color:#8b97b0;font-weight:400;margin-left:10px}}
 .dom{{display:flex;gap:14px}}
+.mvg{{display:flex;align-items:center;gap:22px;margin-top:16px;background:#121829;border:1px solid #232c44;border-radius:14px;padding:14px 22px 30px}}
+.mvl{{width:150px;flex:none}}.mvl span{{display:block;font-size:20px;color:#8b97b0;font-weight:700}}.mvl b{{display:block;font-size:42px;font-weight:900;line-height:1.1}}.mvl em{{font-style:normal;font-size:18px;font-weight:700}}
+.mvb{{position:relative;flex:1;height:16px;margin-top:6px}}.mvb i{{position:absolute;top:0;height:16px;opacity:.85}}.mvb i:first-child{{border-radius:8px 0 0 8px}}.mvb i:nth-child(4){{border-radius:0 8px 8px 0}}
+.mvb i u{{position:absolute;top:-30px;left:0;right:0;text-align:center;text-decoration:none;font-size:17px;color:#aab4c8;font-style:normal}}
+.mvb s{{position:absolute;top:22px;transform:translateX(-50%);text-decoration:none;font-size:16px;color:#6c7890}}
+.mvb p{{position:absolute;top:-9px;width:6px;height:34px;margin-left:-3px;background:#fff;border-radius:3px;box-shadow:0 0 0 3px #0b0f1a}}
 .dt{{flex:1;background:#111727;border-top:4px solid;border-radius:12px;padding:14px 16px}}
 .dt span{{display:block;font-size:20px;color:#aab4c8;font-weight:700}}
 .dt small.en{{display:block;font-size:15px;color:#8b97b0;margin-top:1px}}
